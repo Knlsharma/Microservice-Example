@@ -18,14 +18,14 @@
 * Movie_Catalog-service:
     * hostname: catalog-service
     * Ports: 8081:8081
-    * URL: http://localhost:8081
+    * URL: http://movie-catalog-service:8081/
     
 * Movie_Info-service   
     * hostname: inventory-service
     * Ports: 8082:8082
-    * URL: http://localhost:8082
+    * URL: http://movie-info-service:8082/
     
 * Movie_Rating-service  
     * hostname: order-service
     * Ports: 8083:8083
-    * URL: http://localhost:8083 
+    * URL: http://movie-rating-service:8083/
