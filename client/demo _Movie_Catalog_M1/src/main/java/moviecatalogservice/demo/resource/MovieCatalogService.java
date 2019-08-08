@@ -37,7 +37,7 @@ public class MovieCatalogService {
 	   
     RestTemplate restTemplate = new RestTemplate();
 		
-		 UserRating ratings = resttemplate.getForObject("http://localhost:8083/ratingsdata/user/" + userId, UserRating.class);
+		 UserRating ratings = resttemplate.getForObject("http://movie-rating-service/ratingsdata/user/" + userId, UserRating.class);
 	                
 
 		
@@ -47,17 +47,14 @@ public class MovieCatalogService {
 				 
 				 // Hardcored URL Bad Approach
 		 return ratings.getRatings().stream().map(rating -> {
-	                   Movie movie = resttemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId(), Movie.class);
+	                   Movie movie = resttemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieId(), Movie.class);
 	                  
 	         // Using Web Client
 	                   
  /*	Movie movie = 	 webClientBuilder.build().get().uri("http://localhost:8082/movies/ " +rating.getMovieId()).retrieve()
 		 .bodyToMono(Movie.class).block(); 
 	*/	
-	
-		 
-		 
-		 
+
 		 
 					 return new CatalogItem(movie.getName(), rating.getRating());
 	                })
