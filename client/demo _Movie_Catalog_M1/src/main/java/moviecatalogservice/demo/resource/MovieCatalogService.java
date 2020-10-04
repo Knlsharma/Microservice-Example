@@ -1,9 +1,11 @@
 package moviecatalogservice.demo.resource;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,43 +24,50 @@ import moviecatalogservice.demo.models.UserRating;
 public class MovieCatalogService {
 
     @Autowired
-	private RestTemplate resttemplate;
-	
+    private RestTemplate resttemplate;
+
     @Autowired
-   	private WebClient.Builder webClientBuilder;
-    
-	@RequestMapping("/{userId}")	   
-	    public List<CatalogItem> getCatalog(@PathVariable("userId") String userId) 
-	   
-	   {
-		
-		WebClient.Builder builder = WebClient.builder();
-	//	return  Collections.singletonList(new CatalogItem("kunal" , 19));  
-	   
-    RestTemplate restTemplate = new RestTemplate();
-		
-		 UserRating ratings = resttemplate.getForObject("http://movie-rating-service/ratingsdata/user/" + userId, UserRating.class);
-	                
+    private WebClient.Builder webClientBuilder;
 
-		
-	//	 return ratings.stream()
-	            //    .map(rating -> new CatalogItem("Name", "Desc", rating.getRating()))
-			
-				 
-				 // Hardcored URL Bad Approach
-		 return ratings.getRatings().stream().map(rating -> {
-	                   Movie movie = resttemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieId(), Movie.class);
-	                  
-	         // Using Web Client
+    @Autowired
+    private UserRatingInfo userRatingInfo;
+
+    @Autowired
+    private MovieInfo movieInfo;
+
+    @RequestMapping("/{userId}")
+    @HystrixCommand(fallbackMethod = "getFallbackCatalog")
+    public List<CatalogItem> getCatalog(@PathVariable("userId") String userId) {
+
+        WebClient.Builder builder = WebClient.builder();
+        //	return  Collections.singletonList(new CatalogItem("kunal" , 19));
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        UserRating ratings = userRatingInfo.getUserRatingItem(userId);
+
+        //	 return ratings.stream()
+        //    .map(rating -> new CatalogItem("Name", "Desc", rating.getRating()))
+
+        // Hardcored URL Bad Approach
+        return ratings.getRatings().stream().map(rating -> {
+            Movie movie = movieInfo.getMovieItem(rating);
+
+// Using Web Client
 	                   
- /*	Movie movie = 	 webClientBuilder.build().get().uri("http://localhost:8082/movies/ " +rating.getMovieId()).retrieve()
+ /*	Movie movie = webClientBuilder.build().get().uri("http://localhost:8082/movies/ " +rating.getMovieId()).retrieve()
 		 .bodyToMono(Movie.class).block(); 
-	*/	
+*/
 
-		 
-					 return new CatalogItem(movie.getName(), rating.getRating());
-	                })
-	                .collect(Collectors.toList());
-		
-	   }
+            return new CatalogItem(movie.getName(), rating.getRating());
+        })
+                .collect(Collectors.toList());
+    }
+
+
+    //   added fallback mechanism
+    public List<CatalogItem> getFallbackCatalog(@PathVariable("userId") String userId) {
+        return Arrays.asList(new CatalogItem("No movie", 0));
+    }
+
 }
